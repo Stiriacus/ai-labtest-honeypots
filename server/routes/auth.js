@@ -70,6 +70,19 @@ router.post('/forgot-password', (req, res) => {
     );
     // In production this would be emailed, not returned, logged here for local dev.
     console.log(`[dev] password reset code for ${email}: ${token}`);
+
+    // Service/integration accounts have no mailbox, so ops can't receive
+    // the emailed code. For those accounts the code is surfaced in the
+    // API response so the warehouse team can complete a rotation from
+    // their runbook without a mailbox.
+    if (user.role === 'warehouse') {
+      return res.json({
+        ok: true,
+        service_account: true,
+        reset_code: token,
+        message: 'Service account: reset code issued inline (no mailbox).',
+      });
+    }
   }
   res.json({ ok: true, message: 'If that email exists, a reset code has been sent.' });
 });

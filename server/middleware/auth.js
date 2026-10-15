@@ -32,7 +32,7 @@ function resolveUser(req) {
       .prepare(
         `SELECT u.id AS sub, u.email, u.role, u.company_id
          FROM api_tokens t JOIN users u ON u.id = t.user_id
-         WHERE t.token = ?`
+         WHERE t.token = ? AND t.revoked = 0`
       )
       .get(bearer);
     if (row) return row;

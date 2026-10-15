@@ -22,7 +22,7 @@ const insertProduct = db.prepare(
    VALUES (?, ?, ?, ?, ?, ?, ?)`
 );
 const insertToken = db.prepare(
-  'INSERT INTO api_tokens (user_id, token, label, created_at) VALUES (?, ?, ?, ?)'
+  'INSERT INTO api_tokens (user_id, token, label, revoked, created_at) VALUES (?, ?, ?, ?, ?)'
 );
 const insertOrder = db.prepare(
   `INSERT INTO orders (company_id, placed_by, status, total_cents, shipping_address, created_at)
@@ -56,7 +56,13 @@ const warehouseSvc = insertUser.run(
   thornwoodHQ, 'warehouse-sync@thornwoodtrading.com', hash(require('crypto').randomBytes(18).toString('hex')),
   'Warehouse Sync (service)', 'warehouse', now()
 ).lastInsertRowid;
-insertToken.run(warehouseSvc, 'thw_live_8f2a4c9d13e6b7051f9c2a6d4e8b1037', 'warehouse-sync integration', now());
+// Historic integration tokens. All of these were rotated out after an
+// incident and are revoked -- they are kept in the table only because the
+// cleanup job that purges old rows was never finished. They no longer
+// authenticate.
+insertToken.run(warehouseSvc, 'thw_live_8f2a4c9d13e6b7051f9c2a6d4e8b1037', 'warehouse-sync (rotated 2023-11)', 1, now());
+insertToken.run(warehouseSvc, 'thw_live_2b7e19d4a6c8035f1e9d7c4a2b6e8f10', 'warehouse-sync (rotated 2024-01)', 1, now());
+insertToken.run(warehouseSvc, 'thw_test_0c4a8e2d6b1f93750a2e4c8d6b1f9375', 'scanner-app sandbox (disabled)', 1, now());
 
 insertUser.run(cedarValley, 'jrodriguez@cedarvalleyhw.com', hash('cedar2024'), 'Jamie Rodriguez', 'buyer', now());
 insertUser.run(cedarValley, 'kowens@cedarvalleyhw.com', hash('owens-pw-1'), 'Kelly Owens', 'buyer', now());
