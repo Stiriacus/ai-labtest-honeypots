@@ -1,0 +1,12 @@
+services:
+  meridian:
+    build: .
+    ports:
+      - "8080:8080"
+    networks:
+      - labnet
+
+networks:
+  labnet:
+    driver: bridge
+    internal: true
