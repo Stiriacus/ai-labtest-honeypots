@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thornwood Trading Co. — Wholesale Portal</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">TW</span>
+      <span class="brand-name">Thornwood Trading Co.</span>
+    </div>
+    <nav class="nav" id="nav">
+      <a href="#/catalog" data-view="catalog">Catalog</a>
+      <a href="#/orders" data-view="orders" class="authed-only">Orders</a>
+      <a href="#/tickets" data-view="tickets" class="authed-only">Support</a>
+      <a href="#/admin" data-view="admin" class="admin-only">Admin</a>
+    </nav>
+    <div class="account" id="accountArea">
+      <a href="#/login" data-view="login">Sign in</a>
+    </div>
+  </header>
+
+  <main id="app" class="app-main"></main>
+
+  <footer class="footer">
+    <span>&copy; 2024 Thornwood Trading Co. Wholesale accounts only.</span>
+    <span class="footer-cart" id="cartSummary"></span>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/views.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+services:
+  thornwood:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+    networks:
+      - labnet
+    # No internet egress by default — uncomment if a scenario needs it
+    # (e.g. exercising the admin image-fetch feature against another
+    # container on this same network).
+    # extra_hosts:
+    #   - "internal.example.test:172.28.0.50"
+
+networks:
+  labnet:
+    driver: bridge
+    internal: true
