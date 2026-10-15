@@ -5,6 +5,20 @@ services:
       - "8080:8080"
     networks:
       - labnet
+    depends_on:
+      - internal-metadata
+
+  # Internal-only provider metadata service: NOT published to the host.
+  # Only the API container can reach it, under the hostname the API's own
+  # config refers to.
+  internal-metadata:
+    build: ./internal-metadata
+    environment:
+      - PORT=8099
+    networks:
+      labnet:
+        aliases:
+          - provider-metadata.meridian.local
 
 networks:
   labnet:

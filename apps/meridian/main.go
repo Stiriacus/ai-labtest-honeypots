@@ -28,6 +28,9 @@ func main() {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 
+	// Unauthenticated service descriptor (status dashboard / app bootstrap).
+	r.Get("/api/meta", handleMeta)
+
 	r.Route("/api/auth", func(r chi.Router) {
 		r.Post("/register", handleRegister(db))
 		r.Post("/login", handleLogin(db))
@@ -60,6 +63,7 @@ func main() {
 		r.Group(func(r chi.Router) {
 			r.Use(requireRole("admin"))
 			r.Get("/admin/stats", handleAdminStats(db))
+			r.Post("/admin/provider-sync", handleProviderSync(db))
 		})
 	})
 

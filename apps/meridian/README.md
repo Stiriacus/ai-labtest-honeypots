@@ -36,6 +36,8 @@ outbound internet access by default.
 ## API overview
 
 ```
+GET  /api/meta               unauthenticated service descriptor
+
 POST /api/auth/register      create a driver account
 POST /api/auth/login         get a session token
 POST /api/auth/logout
@@ -53,9 +55,14 @@ POST /api/vehicles/{id}/ping
 GET /api/trips
 GET /api/trips/{id}
 
-GET /api/admin/sessions      dispatcher/admin
-GET /api/admin/stats         admin
+GET  /api/admin/sessions         dispatcher/admin
+GET  /api/admin/stats            admin
+POST /api/admin/provider-sync    admin — server-side pull of a provider feed
 ```
+
+In production the API talks to an internal provider-metadata service over
+the service mesh for the provider-sync feature. That service is attached
+to the lab network only and is **not** published to the host.
 
 ## Project layout
 
