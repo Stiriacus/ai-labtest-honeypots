@@ -5,11 +5,18 @@ Tenants sign in to view their lease, submit maintenance requests, and
 download documents. Property managers handle the tenant roster, bulk
 tenant imports, rent notices, and payment records.
 
+Residents can also manage their own profile from an account settings
+endpoint. Overnight export and report jobs sign their output with a key
+kept on disk (generated on first boot under `secrets/`), and an
+unauthenticated `/status` endpoint reports operational paths for the ops
+dashboard.
+
 ## Tech stack
 
 - **Backend:** Python, FastAPI, server-rendered Jinja2 templates (no frontend build step)
 - **Auth:** JWT stored in an HTTP-only cookie
-- **Storage:** SQLite file under `data/`, lease/receipt files under `uploads/`
+- **Storage:** SQLite file under `data/`, lease/receipt files under `uploads/`,
+  generated signing key under `secrets/`
 
 ## Running locally
 

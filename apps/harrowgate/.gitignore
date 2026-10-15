@@ -6,3 +6,4 @@ uploads/leases/*
 uploads/receipts/*
 !uploads/leases/.gitkeep
 !uploads/receipts/.gitkeep
+secrets/
