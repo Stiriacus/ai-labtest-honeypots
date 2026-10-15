@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Request #{{ mr.id }} — Harrowgate{% endblock %}
+{% block content %}
+<h1>#{{ mr.id }} — {{ mr.subject }} <span class="pill {{ mr.status }}">{{ mr.status }}</span></h1>
+<div class="card">
+  <p>{{ mr.description }}</p>
+</div>
+
+<div class="card">
+  <h2>Notes</h2>
+  {% for n in notes %}
+    <div class="note">
+      <div class="meta">{{ n.full_name }} &middot; {{ n.created_at }}</div>
+      <!-- Notes support basic rich formatting pasted in from email threads -->
+      <div class="body">{{ n.body|safe }}</div>
+    </div>
+  {% endfor %}
+
+  <form method="post" action="/maintenance/{{ mr.id }}/notes">
+    <div class="field"><textarea name="body" placeholder="Add a note…" required></textarea></div>
+    <button class="btn small" type="submit">Add note</button>
+  </form>
+</div>
+
+{% if session.role == 'manager' %}
+<div class="card">
+  <h2>Update status</h2>
+  <form method="post" action="/maintenance/{{ mr.id }}/status">
+    <input type="hidden" name="acting_role" value="manager" />
+    <div class="field">
+      <select name="status">
+        <option value="open">Open</option>
+        <option value="in_progress">In progress</option>
+        <option value="closed">Closed</option>
+      </select>
+    </div>
+    <button class="btn secondary small" type="submit">Update</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

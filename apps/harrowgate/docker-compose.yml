@@ -1,0 +1,14 @@
+services:
+  harrowgate:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - JWT_SECRET=harrowgate-dev-secret
+    networks:
+      - labnet
+
+networks:
+  labnet:
+    driver: bridge
+    internal: true

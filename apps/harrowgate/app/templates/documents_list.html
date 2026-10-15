@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Documents — Harrowgate{% endblock %}
+{% block content %}
+<h1>My Documents</h1>
+<div class="card">
+  {% if docs %}
+  <table>
+    <thead><tr><th>Title</th><th>Uploaded</th><th></th></tr></thead>
+    <tbody>
+      {% for d in docs %}
+      <tr>
+        <td>{{ d.title }}</td>
+        <td>{{ d.uploaded_at }}</td>
+        <td><a class="btn small" href="/documents/{{ d.id }}/download">Download</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No documents on file yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

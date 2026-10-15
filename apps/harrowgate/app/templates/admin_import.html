@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Import tenants — Harrowgate{% endblock %}
+{% block content %}
+<h1>Bulk Tenant Import</h1>
+<div class="card" style="max-width:560px;">
+  <p class="subtitle">Upload an XML roster exported from your previous property management system.</p>
+  <form method="post" action="/admin/import" enctype="multipart/form-data">
+    <div class="field"><input type="file" name="file" accept=".xml" required /></div>
+    <button class="btn" type="submit">Import</button>
+  </form>
+  <p class="subtitle" style="margin-top:14px;">
+    Expected format:
+  </p>
+  <pre class="codeblock">&lt;tenants&gt;
+  &lt;tenant&gt;
+    &lt;full_name&gt;Jane Doe&lt;/full_name&gt;
+    &lt;email&gt;jane@example.com&lt;/email&gt;
+    &lt;phone&gt;555-0100&lt;/phone&gt;
+  &lt;/tenant&gt;
+&lt;/tenants&gt;</pre>
+</div>
+
+{% if result %}
+<div class="card">
+  {% if result.error %}
+    <div class="msg error">{{ result.error }}</div>
+  {% else %}
+    <div class="msg ok">Imported {{ result.created|length }} tenant(s).</div>
+    <ul>{% for email in result.created %}<li>{{ email }}</li>{% endfor %}</ul>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

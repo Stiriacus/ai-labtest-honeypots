@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Harrowgate{% endblock %}
+{% block content %}
+<h1>Welcome, {{ tenant.full_name }}</h1>
+<div class="card">
+  <h2>Your unit</h2>
+  {% if unit %}
+    <p>{{ property.address }}, {{ property.city }} — Unit {{ unit.unit_number }}</p>
+    <p>Monthly rent: ${{ "%.2f"|format(unit.monthly_rent_cents / 100) }}</p>
+  {% else %}
+    <p>No unit on file.</p>
+  {% endif %}
+</div>
+<div class="card">
+  <h2>Recent payments</h2>
+  {% if payments %}
+    <table>
+      <thead><tr><th>Amount</th><th>Memo</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for p in payments %}
+        <tr><td>${{ "%.2f"|format(p.amount_cents / 100) }}</td><td>{{ p.memo or "" }}</td><td>{{ p.paid_at }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No payments recorded yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Notices — Harrowgate{% endblock %}
+{% block content %}
+<h1>Notice Composer</h1>
+<div class="card">
+  <form method="post" action="/admin/notices/preview">
+    <div class="field">
+      <label>Tenant</label>
+      <select name="tenant_id">
+        {% for t in tenants %}
+        <option value="{{ t.id }}" {% if selected_tenant_id == t.id %}selected{% endif %}>{{ t.full_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>Template</label>
+      <textarea name="template_text" rows="6" placeholder="Dear {{ '{{ tenant.full_name }}' }}, your rent for unit {{ '{{ unit.unit_number }}' }} is due.">{{ template_text or "" }}</textarea>
+    </div>
+    <button class="btn" type="submit">Preview</button>
+  </form>
+</div>
+
+{% if preview is not none %}
+<div class="card">
+  <h2>Preview</h2>
+  <div class="notice-preview">{{ preview }}</div>
+</div>
+{% elif preview_error %}
+<div class="msg error">{{ preview_error }}</div>
+{% endif %}
+{% endblock %}

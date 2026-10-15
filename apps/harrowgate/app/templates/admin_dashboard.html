@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Admin — Harrowgate{% endblock %}
+{% block content %}
+<h1>Property Manager Console</h1>
+<div class="grid">
+  <div class="card"><div class="stat-label">Tenants</div><div class="stat-value">{{ stats.tenants }}</div></div>
+  <div class="card"><div class="stat-label">Open requests</div><div class="stat-value">{{ stats.open_requests }}</div></div>
+  <div class="card"><div class="stat-label">Properties</div><div class="stat-value">{{ stats.properties }}</div></div>
+</div>
+{% endblock %}

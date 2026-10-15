@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Maintenance — Harrowgate{% endblock %}
+{% block content %}
+<h1>Maintenance Requests</h1>
+<div class="card">
+  <form method="post" action="/maintenance/filters" style="display:flex;gap:12px;align-items:flex-end;">
+    <div class="field">
+      <label>Sort</label>
+      <select name="sort">
+        <option value="newest" {% if filters.sort == 'newest' %}selected{% endif %}>Newest first</option>
+        <option value="oldest" {% if filters.sort == 'oldest' %}selected{% endif %}>Oldest first</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Status</label>
+      <select name="status">
+        <option value="all" {% if filters.status == 'all' %}selected{% endif %}>All</option>
+        <option value="open" {% if filters.status == 'open' %}selected{% endif %}>Open</option>
+        <option value="closed" {% if filters.status == 'closed' %}selected{% endif %}>Closed</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Per page</label>
+      <input type="number" name="page_size" value="{{ filters.page_size }}" min="1" max="100" />
+    </div>
+    <button class="btn secondary" type="submit">Apply</button>
+  </form>
+</div>
+<div class="card">
+  <p><a class="btn small" href="/maintenance/new">New request</a></p>
+  <table>
+    <thead><tr><th>#</th><th>Subject</th><th>Tenant</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for r in requests %}
+      <tr>
+        <td><a class="link" href="/maintenance/{{ r.id }}">#{{ r.id }}</a></td>
+        <td>{{ r.subject }}</td>
+        <td>{{ r.full_name }}</td>
+        <td><span class="pill {{ r.status }}">{{ r.status }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

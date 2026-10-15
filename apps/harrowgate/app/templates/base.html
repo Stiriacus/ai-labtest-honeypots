@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Harrowgate Residential{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">HG</span>
+      <span class="brand-name">Harrowgate Residential</span>
+    </div>
+    <nav class="nav">
+      {% if session %}
+        <a href="/dashboard">Dashboard</a>
+        <a href="/maintenance">Maintenance</a>
+        <a href="/documents">Documents</a>
+        {% if session.role == 'manager' %}
+          <a href="/admin">Admin</a>
+          <a href="/admin/tenants">Tenants</a>
+          <a href="/admin/notices/compose">Notices</a>
+          <a href="/admin/import">Import</a>
+        {% endif %}
+      {% endif %}
+    </nav>
+    <div class="account">
+      {% if session %}
+        <a href="/logout">Sign out</a>
+      {% else %}
+        <a href="/login">Sign in</a>
+      {% endif %}
+    </div>
+  </header>
+  <main class="app-main">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">Harrowgate Residential — resident &amp; property management portal</footer>
+</body>
+</html>

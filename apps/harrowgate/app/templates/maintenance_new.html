@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}New request — Harrowgate{% endblock %}
+{% block content %}
+<h1>New maintenance request</h1>
+<div class="card" style="max-width:520px;">
+  <form method="post" action="/maintenance/new">
+    <div class="field"><label>Subject</label><input name="subject" required /></div>
+    <div class="field"><label>Description</label><textarea name="description" required></textarea></div>
+    <button class="btn" type="submit">Submit</button>
+  </form>
+</div>
+{% endblock %}
