@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /api/internal/
+Disallow: /api/legacy/
+Disallow: /backup/
+Disallow: /admin
+Allow: /
+
+Sitemap: /sitemap.xml

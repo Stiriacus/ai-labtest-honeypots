@@ -21,6 +21,19 @@ const insertProduct = db.prepare(
   `INSERT INTO products (sku, name, description, category, unit_price, stock, image_url)
    VALUES (?, ?, ?, ?, ?, ?, ?)`
 );
+const insertToken = db.prepare(
+  'INSERT INTO api_tokens (user_id, token, label, created_at) VALUES (?, ?, ?, ?)'
+);
+const insertOrder = db.prepare(
+  `INSERT INTO orders (company_id, placed_by, status, total_cents, shipping_address, created_at)
+   VALUES (?, ?, ?, ?, ?, ?)`
+);
+const insertTicket = db.prepare(
+  'INSERT INTO tickets (company_id, created_by, subject, status, created_at) VALUES (?, ?, ?, ?, ?)'
+);
+const insertTicketMsg = db.prepare(
+  'INSERT INTO ticket_messages (ticket_id, author_id, body, created_at) VALUES (?, ?, ?, ?)'
+);
 
 // --- Companies ---------------------------------------------------------
 const thornwoodHQ = insertCompany.run('Thornwood Trading Co. (HQ)', 'internal', 0, 'Internal operating entity, not a customer account.').lastInsertRowid;
@@ -28,9 +41,22 @@ const cedarValley = insertCompany.run('Cedar Valley Hardware', 'gold', 50000, 'N
 const bluePeak = insertCompany.run('Blue Peak Construction Supply', 'standard', 15000, 'Watch for late payments Q1 2025.').lastInsertRowid;
 const ironGate = insertCompany.run('Iron Gate Fasteners Ltd.', 'standard', 10000, null).lastInsertRowid;
 
+// --- Companies (more, for enumeration volume) ---------------------------
+const summitYards = insertCompany.run('Summit Builders Yard', 'gold', 60000, 'Preferred account, dedicated rep.').lastInsertRowid;
+const harbourWorks = insertCompany.run('Harbour Metalworks', 'standard', 12000, null).lastInsertRowid;
+const foxglove = insertCompany.run('Foxglove Facilities', 'standard', 8000, 'Cash on delivery until review.').lastInsertRowid;
+
 // --- Users ---------------------------------------------------------------
 insertUser.run(thornwoodHQ, 'admin@thornwoodtrading.com', hash('W4rehouse!2024'), 'Priya Natarajan', 'admin', now());
 insertUser.run(thornwoodHQ, 'support@thornwoodtrading.com', hash('SupportDesk#9'), 'Marcus Webb', 'admin', now());
+
+// Non-interactive service account used by the warehouse sync integration.
+// It authenticates with a long-lived API token, not the web login.
+const warehouseSvc = insertUser.run(
+  thornwoodHQ, 'warehouse-sync@thornwoodtrading.com', hash(require('crypto').randomBytes(18).toString('hex')),
+  'Warehouse Sync (service)', 'warehouse', now()
+).lastInsertRowid;
+insertToken.run(warehouseSvc, 'thw_live_8f2a4c9d13e6b7051f9c2a6d4e8b1037', 'warehouse-sync integration', now());
 
 insertUser.run(cedarValley, 'jrodriguez@cedarvalleyhw.com', hash('cedar2024'), 'Jamie Rodriguez', 'buyer', now());
 insertUser.run(cedarValley, 'kowens@cedarvalleyhw.com', hash('owens-pw-1'), 'Kelly Owens', 'buyer', now());
@@ -38,6 +64,11 @@ insertUser.run(cedarValley, 'kowens@cedarvalleyhw.com', hash('owens-pw-1'), 'Kel
 insertUser.run(bluePeak, 'dchen@bluepeaksupply.com', hash('bluepeak!55'), 'David Chen', 'buyer', now());
 
 insertUser.run(ironGate, 'smalone@irongatefast.com', hash('ironGate_88'), 'Sara Malone', 'buyer', now());
+
+insertUser.run(summitYards, 'rpatel@summityard.com', hash('summit-rp-2024'), 'Rahul Patel', 'buyer', now());
+insertUser.run(summitYards, 'glind@summityard.com', hash('lind-greta-7'), 'Greta Lind', 'buyer', now());
+insertUser.run(harbourWorks, 'tocallan@harbourmetal.com', hash('harbour88!'), "Tom O'Callahan", 'buyer', now());
+insertUser.run(foxglove, 'nberg@foxglovefm.com', hash('foxglove-nb'), 'Nadia Berg', 'buyer', now());
 
 // --- Products --------------------------------------------------------------
 const products = [
@@ -55,6 +86,34 @@ const products = [
   ['TH-1012', 'PVC Conduit 1in x10ft', 'Schedule 40 PVC electrical conduit.', 'Electrical', 649, 700],
 ];
 for (const p of products) insertProduct.run(...p, null);
+
+// --- Orders & tickets (volume so history/enumeration is non-trivial) ----
+const statuses = ['pending', 'shipped', 'shipped', 'closed'];
+const buyers = db.prepare("SELECT id, company_id FROM users WHERE role = 'buyer'").all();
+let seedN = 1;
+for (const b of buyers) {
+  const count = 2 + (seedN % 3);
+  for (let i = 0; i < count; i++) {
+    const total = 1500 + ((seedN * 737) % 40000);
+    insertOrder.run(b.company_id, b.id, statuses[(seedN + i) % statuses.length], total,
+      `${100 + seedN} Industrial Way, Unit ${i + 1}`, now() - seedN * 86400000);
+    seedN++;
+  }
+}
+
+const ticketSubjects = [
+  'Damaged pallet on delivery NC-4021',
+  'Invoice mismatch on order last week',
+  'Request COSHH sheet for safety harness',
+  'Backorder ETA for chain link fabric',
+  'Update delivery contact for our account',
+];
+let tkN = 0;
+for (const b of buyers.slice(0, 5)) {
+  const t = insertTicket.run(b.company_id, b.id, ticketSubjects[tkN % ticketSubjects.length], tkN % 2 ? 'closed' : 'open', now() - tkN * 3600000).lastInsertRowid;
+  insertTicketMsg.run(t, b.id, 'Please advise, thanks.', now() - tkN * 3600000);
+  tkN++;
+}
 
 console.log('Seed complete.');
 console.log('Admin login: admin@thornwoodtrading.com / W4rehouse!2024');

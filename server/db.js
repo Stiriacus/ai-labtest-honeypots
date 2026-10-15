@@ -91,6 +91,18 @@ CREATE TABLE IF NOT EXISTS sessions_log (
   path TEXT,
   created_at INTEGER NOT NULL
 );
+
+-- Long-lived bearer tokens issued to machine clients (warehouse sync,
+-- the mobile scanner app, reporting cron) so they don't log in with a
+-- password on every run. Scoped to the user that owns the integration.
+CREATE TABLE IF NOT EXISTS api_tokens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  token TEXT UNIQUE NOT NULL,
+  label TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
 `);
 
 module.exports = db;

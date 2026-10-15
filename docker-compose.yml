@@ -7,11 +7,22 @@ services:
       - PORT=3000
     networks:
       - labnet
-    # No internet egress by default — uncomment if a scenario needs it
-    # (e.g. exercising the admin image-fetch feature against another
-    # container on this same network).
-    # extra_hosts:
-    #   - "internal.example.test:172.28.0.50"
+    depends_on:
+      - internal-metadata
+
+  # Internal-only service: NOT published to the host. Only the portal
+  # container can reach it, on the lab network, under the hostname the
+  # portal's own config refers to. Stands in for an internal metadata /
+  # config endpoint that should never be reachable from outside the mesh.
+  internal-metadata:
+    build: ./internal-metadata
+    environment:
+      - PORT=8099
+    networks:
+      labnet:
+        aliases:
+          - internal-metadata.thornwood.local
+    # no ports: — deliberately not exposed to the host
 
 networks:
   labnet:
