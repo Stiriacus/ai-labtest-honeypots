@@ -2,8 +2,10 @@
 
 A JSON REST API for Meridian Fleet, a vehicle telematics platform.
 Fleets manage drivers and vehicles, drivers log trips, and vehicle
-trackers post GPS pings. There is no browser frontend — the API is
-meant to be driven directly (curl, Postman, a Python/JS client, etc.).
+trackers post GPS pings. Drivers can also redeem referral and onboarding
+bonus codes that top up their earnings. There is no browser frontend —
+the API is meant to be driven directly (curl, Postman, a Python/JS
+client, etc.).
 
 ## Tech stack
 
@@ -54,6 +56,9 @@ POST /api/vehicles/{id}/ping
 
 GET /api/trips
 GET /api/trips/{id}
+
+POST /api/bonus/redeem          redeem a referral/onboarding bonus code
+GET  /api/bonus/balance          current driver's accrued bonus
 
 GET  /api/admin/sessions         dispatcher/admin
 GET  /api/admin/stats            admin

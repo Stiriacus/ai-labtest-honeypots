@@ -1,9 +1,10 @@
 # Thornwood Trading Co. — Wholesale Portal
 
 A B2B ordering portal for Thornwood Trading Co. Registered trade accounts can
-browse the catalog, place orders, review order history, and raise support
-tickets with the Thornwood team. An internal admin area handles company
-accounts, order oversight, and catalog management.
+browse the catalog, place orders (applying promotional and goodwill discount
+codes at checkout), review order history, manage their account preferences,
+and raise support tickets with the Thornwood team. An internal admin area
+handles company accounts, order oversight, and catalog management.
 
 In production the portal runs behind an nginx reverse proxy and talks to a
 few internal-only backend services over the service mesh (an asset fetcher

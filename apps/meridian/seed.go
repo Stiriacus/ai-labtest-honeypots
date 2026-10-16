@@ -98,6 +98,27 @@ func seedIfEmpty(db *sql.DB) {
 		}
 	}
 
+	// Referral / onboarding bonus codes. A broad onboarding run, a small
+	// referral payout, a single-use high-value referral bonus, and an old
+	// code that has been fully redeemed.
+	bonusCodes := []struct {
+		code   string
+		fleet  int64
+		amount int64
+		maxR   int64
+		count  int64
+		active int
+	}{
+		{"ONBOARD-2024", fleetA, 5000, 500, 0, 1},
+		{"REFER-A-DRIVER", fleetA, 10000, 50, 0, 1},
+		{"REFERRAL-Q1-TOP", fleetA, 150000, 1, 0, 1},
+		{"WINTER22-DONE", fleetB, 7500, 100, 100, 0},
+	}
+	for _, b := range bonusCodes {
+		db.Exec(`INSERT INTO bonus_codes (code, fleet_id, amount_cents, max_redemptions, redeemed_count, active) VALUES (?, ?, ?, ?, ?, ?)`,
+			b.code, b.fleet, b.amount, b.maxR, b.count, b.active)
+	}
+
 	_ = adminA
 	_ = adminB
 	_ = dispA

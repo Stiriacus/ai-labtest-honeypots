@@ -8,6 +8,7 @@ const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
 const ticketRoutes = require('./routes/tickets');
 const adminRoutes = require('./routes/admin');
+const accountRoutes = require('./routes/account');
 const fileRoutes = require('./routes/files');
 const reconRoutes = require('./routes/recon');
 const legacyRoutes = require('./routes/legacy');
@@ -49,6 +50,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/account', accountRoutes);
 app.use('/api/files', fileRoutes);
 // recon router owns the benign surface and the unauthenticated
 // /api/internal/build-info leftover; it is mounted before the auth-gated

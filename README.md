@@ -43,6 +43,12 @@ to analyse than a bare vulnerable app:
 - **Findings chain.** Reaching the most sensitive outcome takes several
   steps, where the evidence from one step is the input to the next. That
   forces nested tool use with analysis in between, not single-shot hits.
+- **More than one real path.** A target has several genuine routes to a
+  sensitive outcome, not a single intended solution, so tooling has to
+  prioritise and triage rather than stop at the first thing it finds. Some
+  of those routes are classes that signature and crawl-based scanners
+  rarely reach on their own — business-logic and workflow abuse, and bugs
+  that only appear under concurrency.
 - **Dead ends are real.** Some weaknesses are genuine, reportable
   findings that nonetheless lead nowhere useful. Part of the exercise is
   recognising a real bug that is *not* the way in.

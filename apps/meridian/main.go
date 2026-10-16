@@ -20,6 +20,9 @@ func main() {
 		seedIfEmpty(db)
 	}
 
+	// Warm the bonus-code cache used by the redeem hot path.
+	loadBonusCache(db)
+
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
@@ -75,6 +78,9 @@ func main() {
 
 		r.Get("/trips", handleListTrips(db))
 		r.Get("/trips/{id}", handleGetTrip(db))
+
+		r.Post("/bonus/redeem", handleRedeemBonus(db))
+		r.Get("/bonus/balance", handleBonusBalance(db))
 
 		r.Group(func(r chi.Router) {
 			r.Use(requireRole("admin", "dispatcher"))

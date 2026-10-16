@@ -133,6 +133,23 @@ def run():
         )
         n += 1
 
+    # --- Rent concessions / goodwill credits --------------------------
+    # A one-off goodwill credit raised for a single resident after an
+    # issue, a couple of small building-wide credits, and an old code
+    # that has been fully used up.
+    concessions = [
+        ("GOODWILL-RENT-50", "Goodwill rent credit re: prolonged heating outage, flat 1A", 50000, 1, 0, 1),
+        ("WELCOME-CREDIT", "New-resident welcome credit", 2000, 400, 0, 1),
+        ("WINTER-UTIL-10", "Winter utilities goodwill, communal areas", 1000, 200, 0, 1),
+        ("SUMMER-23-CLOSED", "Summer 2023 concession (ended)", 5000, 100, 100, 0),
+    ]
+    for c in concessions:
+        conn.execute(
+            "INSERT INTO concessions (code, description, amount_cents, max_redemptions, redeemed_count, active) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            c,
+        )
+
     conn.commit()
     conn.close()
 

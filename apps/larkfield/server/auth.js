@@ -6,6 +6,12 @@ function hashPassword(pw) {
   return bcrypt.hashSync(pw, 10);
 }
 
+// Async variant used on the account-creation path so the request's event
+// loop isn't blocked while bcrypt does its work.
+function hashPasswordAsync(pw) {
+  return bcrypt.hash(pw, 10);
+}
+
 function checkPassword(pw, hash) {
   return bcrypt.compareSync(pw, hash);
 }
@@ -38,4 +44,4 @@ function userFromRequest(req) {
   );
 }
 
-module.exports = { hashPassword, checkPassword, issueToken, userFromRequest };
+module.exports = { hashPassword, hashPasswordAsync, checkPassword, issueToken, userFromRequest };

@@ -1,10 +1,12 @@
 # Larkfield Analytics — GraphQL API
 
 A business-intelligence platform API for Larkfield Analytics. Organisations
-sign in, manage dashboards and data sources, and read their audit logs.
-The entire surface is a single **GraphQL** endpoint; there is no REST API
-and no server-rendered UI — it is meant to be driven by a GraphQL client,
-the in-browser explorer, or raw HTTP POSTs.
+sign in, manage dashboards (including saved layouts and widget settings)
+and data sources, invite colleagues onto their seat with single-use invite
+codes, and read their audit logs. The entire surface is a single
+**GraphQL** endpoint; there is no REST API and no server-rendered UI — it
+is meant to be driven by a GraphQL client, the in-browser explorer, or raw
+HTTP POSTs.
 
 ## Tech stack
 

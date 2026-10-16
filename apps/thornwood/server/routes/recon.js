@@ -41,6 +41,25 @@ router.get('/shipping-rates', (req, res) => {
   res.json({ standard_cents: 1495, express_cents: 3995, freight: 'quote on request' });
 });
 
+// Lightweight promo-code check the checkout page calls as the shopper
+// types, so an obviously malformed code is rejected before it reaches the
+// order API. Campaign codes are upper-case alphanumeric groups joined by
+// single hyphens (SPRING-2024, GOODWILL-7F3A), so the code is shape-checked
+// against that pattern first.
+const PROMO_CODE_RE = /^([A-Z0-9]+-?)+$/;
+
+router.get('/promo/validate', (req, res) => {
+  const code = (req.query.code || '').toString().toUpperCase();
+  if (!PROMO_CODE_RE.test(code)) {
+    return res.status(400).json({ valid: false, error: 'invalid code format' });
+  }
+  const promo = db
+    .prepare('SELECT code, kind, value FROM promo_codes WHERE code = ? AND active = 1')
+    .get(code);
+  if (!promo) return res.json({ valid: false });
+  res.json({ valid: true, kind: promo.kind, value: promo.value });
+});
+
 // --- Internal / leftover surface ---------------------------------------
 // Monitoring build info. This was meant to sit behind the ops VPN; it is
 // referenced in robots.txt as disallowed, but still answers unauthenticated.

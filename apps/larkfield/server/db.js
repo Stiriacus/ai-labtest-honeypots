@@ -56,6 +56,30 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at INTEGER NOT NULL,
   FOREIGN KEY (org_id) REFERENCES orgs(id)
 );
+
+-- Seat invitations. An org admin generates a single-use code and sends it
+-- to a colleague; redeeming it provisions their account in the org with
+-- the role the invite was cut for.
+CREATE TABLE IF NOT EXISTS invites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code TEXT UNIQUE NOT NULL,
+  org_id INTEGER NOT NULL,
+  role TEXT NOT NULL DEFAULT 'analyst',
+  email_hint TEXT,
+  redeemed INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  FOREIGN KEY (org_id) REFERENCES orgs(id)
+);
+
+-- Saved dashboard layout/widget settings, stored as a JSON blob so the
+-- front-end can introduce new widget options without a migration. The
+-- editor saves only the keys it changed, which are merged server-side.
+CREATE TABLE IF NOT EXISTS dashboard_layouts (
+  dashboard_id INTEGER PRIMARY KEY,
+  layout_json TEXT NOT NULL DEFAULT '{}',
+  updated_at INTEGER,
+  FOREIGN KEY (dashboard_id) REFERENCES dashboards(id)
+);
 `);
 
 module.exports = db;

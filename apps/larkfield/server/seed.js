@@ -53,5 +53,16 @@ for (let i = 0; i < 20; i++) {
 log.run(orgB, 'panders@tollgate-mfg.com', 'exported report', now - 7200000);
 log.run(orgC, 'jlindqvist@verityhealth.example', 'scheduled refresh', now - 5400000);
 
+// Outstanding seat invitations. Each is single-use and carries the role
+// the colleague will be provisioned with.
+const invite = db.prepare(
+  'INSERT INTO invites (code, org_id, role, email_hint, redeemed, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+);
+invite.run('INV-MEADOW-A1', orgA, 'analyst', 'new.analyst@meadowbrook-retail.com', 0, now);
+invite.run('INV-MEADOW-ADMIN', orgA, 'admin', 'ops.lead@meadowbrook-retail.com', 0, now);
+invite.run('INV-TOLLGATE-7', orgB, 'analyst', 'contractor@tollgate-mfg.com', 0, now);
+// Already-used invite kept for the audit trail.
+invite.run('INV-VERITY-OLD', orgC, 'analyst', 'former.temp@verityhealth.example', 1, now - 30 * 86400000);
+
 console.log('Seed complete.');
 console.log('Analyst login (mutation): ewilson@meadowbrook-retail.com / wilson-ellie-4');

@@ -66,6 +66,27 @@ CREATE TABLE IF NOT EXISTS sessions (
 	created_at INTEGER NOT NULL,
 	last_used_at INTEGER NOT NULL
 );
+
+-- Driver referral / onboarding bonus codes. A fleet issues a code and a
+-- driver redeems it to add a one-off bonus to their earnings. Some codes
+-- are broad onboarding runs; others are single-use referral payouts.
+CREATE TABLE IF NOT EXISTS bonus_codes (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	code TEXT UNIQUE NOT NULL,
+	fleet_id INTEGER NOT NULL,
+	amount_cents INTEGER NOT NULL,
+	max_redemptions INTEGER NOT NULL DEFAULT 1,
+	redeemed_count INTEGER NOT NULL DEFAULT 0,
+	active INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS bonus_redemptions (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	code TEXT NOT NULL,
+	driver_id INTEGER NOT NULL,
+	amount_cents INTEGER NOT NULL,
+	created_at INTEGER NOT NULL
+);
 `
 
 func openDB(path string) *sql.DB {
@@ -75,6 +96,11 @@ func openDB(path string) *sql.DB {
 	}
 	if _, err := db.Exec(schema); err != nil {
 		log.Fatalf("schema: %v", err)
+	}
+	// Earnings bonus balance, added after the referral-bonus feature. The
+	// ALTER fails harmlessly once the column exists.
+	if _, err := db.Exec(`ALTER TABLE drivers ADD COLUMN bonus_cents INTEGER NOT NULL DEFAULT 0`); err != nil {
+		// column already present
 	}
 	return db
 }

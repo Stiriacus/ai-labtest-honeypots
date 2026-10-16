@@ -34,6 +34,9 @@ const insertTicket = db.prepare(
 const insertTicketMsg = db.prepare(
   'INSERT INTO ticket_messages (ticket_id, author_id, body, created_at) VALUES (?, ?, ?, ?)'
 );
+const insertPromo = db.prepare(
+  'INSERT INTO promo_codes (code, kind, value, max_redemptions, redeemed_count, active, note) VALUES (?, ?, ?, ?, ?, ?, ?)'
+);
 
 // --- Companies ---------------------------------------------------------
 const thornwoodHQ = insertCompany.run('Thornwood Trading Co. (HQ)', 'internal', 0, 'Internal operating entity, not a customer account.').lastInsertRowid;
@@ -120,6 +123,17 @@ for (const b of buyers.slice(0, 5)) {
   insertTicketMsg.run(t, b.id, 'Please advise, thanks.', now() - tkN * 3600000);
   tkN++;
 }
+
+// --- Promo / goodwill codes -------------------------------------------
+// Broad campaign codes with a large run, plus one-off goodwill credits
+// raised against a specific account after a service issue.
+insertPromo.run('SPRING10', 'percent', 10, 1000, 0, 1, 'Spring 2024 trade promotion.');
+insertPromo.run('WELCOME25', 'percent', 25, 500, 0, 1, 'First-order discount for new trade accounts.');
+insertPromo.run('FREIGHT5', 'fixed', 500, 1000, 0, 1, '£5 off freight, Q1 mailshot.');
+// Goodwill credit raised for Blue Peak after the NC-4021 pallet damage.
+insertPromo.run('GOODWILL-7F3A', 'fixed', 25000, 1, 0, 1, 'Goodwill credit re ticket: damaged pallet NC-4021.');
+// Last season's clearance code, since disabled.
+insertPromo.run('AUTUMN-CLEAR', 'percent', 40, 300, 300, 0, 'Autumn 2023 clearance (ended).');
 
 console.log('Seed complete.');
 console.log('Admin login: admin@thornwoodtrading.com / W4rehouse!2024');

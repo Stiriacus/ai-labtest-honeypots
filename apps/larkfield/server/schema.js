@@ -10,9 +10,64 @@ const {
   GraphQLList,
   GraphQLNonNull,
   GraphQLInputObjectType,
+  GraphQLScalarType,
+  Kind,
 } = require('graphql');
 const db = require('./db');
 const auth = require('./auth');
+
+// --- JSON scalar -------------------------------------------------------
+// Dashboard layouts and widget settings are free-form, so they travel as
+// an opaque JSON value rather than a hand-maintained input type that has
+// to change every time the front-end adds a widget option.
+function astToValue(ast) {
+  switch (ast.kind) {
+    case Kind.OBJECT: {
+      const obj = {};
+      for (const field of ast.fields) {
+        obj[field.name.value] = astToValue(field.value);
+      }
+      return obj;
+    }
+    case Kind.LIST:
+      return ast.values.map(astToValue);
+    case Kind.INT:
+      return parseInt(ast.value, 10);
+    case Kind.FLOAT:
+      return parseFloat(ast.value);
+    case Kind.BOOLEAN:
+      return ast.value;
+    case Kind.NULL:
+      return null;
+    default:
+      return ast.value;
+  }
+}
+
+const GraphQLJSON = new GraphQLScalarType({
+  name: 'JSON',
+  description: 'Arbitrary JSON value (objects, arrays, scalars).',
+  serialize: (v) => v,
+  parseValue: (v) => v,
+  parseLiteral: astToValue,
+});
+
+// Merge a partial settings object into the stored one, descending into
+// nested objects so a single changed key doesn't clobber its siblings.
+function mergeSettings(target, source) {
+  for (const key of Object.keys(source)) {
+    const val = source[key];
+    if (val && typeof val === 'object' && !Array.isArray(val)) {
+      if (!target[key] || typeof target[key] !== 'object') {
+        target[key] = {};
+      }
+      mergeSettings(target[key], val);
+    } else {
+      target[key] = val;
+    }
+  }
+  return target;
+}
 
 // --- Object types ------------------------------------------------------
 const ServerInfo = new GraphQLObjectType({
@@ -108,6 +163,12 @@ function requireUser(ctx) {
   return ctx.user;
 }
 
+// Shape check for the email on an invite redemption: one or more
+// dot/underscore/hyphen-separated alphanumeric groups, an @, then a
+// dotted domain. Keeps obviously malformed addresses out of the users
+// table before the account is created.
+const EMAIL_RE = /^([a-zA-Z0-9]+[._-]?)+@([a-zA-Z0-9]+[.-]?)+\.[a-zA-Z]{2,}$/;
+
 // --- Query -------------------------------------------------------------
 const Query = new GraphQLObjectType({
   name: 'Query',
@@ -176,6 +237,36 @@ const Query = new GraphQLObjectType({
           .all(u.org_id, args.limit || 25);
       },
     },
+    auditExport: {
+      type: new GraphQLList(AuditLog),
+      args: { limit: { type: GraphQLInt } },
+      // Export view over the audit trail. An analyst exports their own
+      // org's activity; the scheduled compliance rollup widens the export
+      // scope on the options object before the rows are pulled.
+      resolve: (_r, args, ctx) => {
+        const u = requireUser(ctx);
+        const opts = {};
+        if (args.limit) opts.limit = args.limit;
+        const limit = opts.limit || 100;
+        if (opts.allOrgs) {
+          return db.prepare('SELECT * FROM audit_logs ORDER BY id DESC LIMIT ?').all(limit);
+        }
+        return db
+          .prepare('SELECT * FROM audit_logs WHERE org_id = ? ORDER BY id DESC LIMIT ?')
+          .all(u.org_id, limit);
+      },
+    },
+    dashboardLayout: {
+      type: GraphQLString,
+      args: { dashboardId: { type: new GraphQLNonNull(GraphQLID) } },
+      resolve: (_r, args, ctx) => {
+        requireUser(ctx);
+        const row = db
+          .prepare('SELECT layout_json FROM dashboard_layouts WHERE dashboard_id = ?')
+          .get(args.dashboardId);
+        return row ? row.layout_json : '{}';
+      },
+    },
   },
 });
 
@@ -217,6 +308,65 @@ const Mutation = new GraphQLObjectType({
           db.prepare(`UPDATE users SET ${cols.join(', ')} WHERE id = ?`).run(...vals);
         }
         return db.prepare('SELECT * FROM users WHERE id = ?').get(u.id);
+      },
+    },
+    saveDashboardLayout: {
+      type: GraphQLString,
+      args: {
+        dashboardId: { type: new GraphQLNonNull(GraphQLID) },
+        layout: { type: new GraphQLNonNull(GraphQLJSON) },
+      },
+      // The dashboard editor autosaves only the keys the user changed;
+      // they are merged into the stored layout so unrelated widget
+      // settings are preserved.
+      resolve: (_r, args, ctx) => {
+        requireUser(ctx);
+        const row = db
+          .prepare('SELECT layout_json FROM dashboard_layouts WHERE dashboard_id = ?')
+          .get(args.dashboardId);
+        let current = {};
+        try {
+          current = row ? JSON.parse(row.layout_json) : {};
+        } catch (e) {
+          current = {};
+        }
+        mergeSettings(current, args.layout || {});
+        db.prepare(
+          `INSERT INTO dashboard_layouts (dashboard_id, layout_json, updated_at) VALUES (?, ?, ?)
+           ON CONFLICT(dashboard_id) DO UPDATE SET layout_json = excluded.layout_json, updated_at = excluded.updated_at`
+        ).run(args.dashboardId, JSON.stringify(current), Date.now());
+        return JSON.stringify(current);
+      },
+    },
+    redeemInvite: {
+      type: AuthPayload,
+      args: {
+        code: { type: new GraphQLNonNull(GraphQLString) },
+        email: { type: new GraphQLNonNull(GraphQLString) },
+        password: { type: new GraphQLNonNull(GraphQLString) },
+        fullName: { type: GraphQLString },
+      },
+      // Provisions the account the invite was cut for. The chosen email is
+      // shape-checked, the invite must still be unredeemed, then the
+      // account is created and the invite is marked used.
+      resolve: async (_r, args) => {
+        if (!EMAIL_RE.test(args.email)) {
+          throw new Error('invalid email address');
+        }
+        const invite = db.prepare('SELECT * FROM invites WHERE code = ?').get(args.code);
+        if (!invite || invite.redeemed) {
+          throw new Error('invite not found or already redeemed');
+        }
+        const hash = await auth.hashPasswordAsync(args.password);
+        const info = db
+          .prepare(
+            `INSERT INTO users (org_id, email, password_hash, full_name, role, created_at)
+             VALUES (?, ?, ?, ?, ?, ?)`
+          )
+          .run(invite.org_id, args.email, hash, args.fullName || args.email, invite.role, Date.now());
+        db.prepare('UPDATE invites SET redeemed = 1 WHERE id = ?').run(invite.id);
+        const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
+        return { token: auth.issueToken(user.id), user };
       },
     },
     syncDataSource: {

@@ -104,6 +104,54 @@ CREATE TABLE IF NOT EXISTS api_tokens (
   created_at INTEGER NOT NULL,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+-- Promotional / goodwill discount codes applied at checkout. Some are
+-- broad campaign codes with a large run; others are one-off goodwill
+-- credits issued to a single account after a complaint, capped to a
+-- small number of redemptions.
+CREATE TABLE IF NOT EXISTS promo_codes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code TEXT UNIQUE NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'percent',      -- 'percent' | 'fixed'
+  value INTEGER NOT NULL,                     -- percent 0-100, or fixed cents
+  max_redemptions INTEGER NOT NULL DEFAULT 1,
+  redeemed_count INTEGER NOT NULL DEFAULT 0,
+  active INTEGER NOT NULL DEFAULT 1,
+  note TEXT
+);
+
+-- One row per time a promo code is applied to an order, kept for the
+-- finance team's campaign reconciliation.
+CREATE TABLE IF NOT EXISTS coupon_redemptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code TEXT NOT NULL,
+  order_id INTEGER,
+  user_id INTEGER NOT NULL,
+  discount_cents INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+-- Free-form per-user UI/account preferences (saved filters, default
+-- shipping address, notification toggles). Stored as a JSON blob so the
+-- client can add new preference keys without a schema change.
+CREATE TABLE IF NOT EXISTS user_preferences (
+  user_id INTEGER PRIMARY KEY,
+  prefs_json TEXT NOT NULL DEFAULT '{}',
+  updated_at INTEGER
+);
 `);
+
+// Column additions for databases seeded before the promo feature landed.
+// ALTER fails if the column already exists, which is fine to ignore.
+for (const stmt of [
+  'ALTER TABLE orders ADD COLUMN coupon_code TEXT',
+  'ALTER TABLE orders ADD COLUMN discount_cents INTEGER NOT NULL DEFAULT 0',
+]) {
+  try {
+    db.exec(stmt);
+  } catch (e) {
+    /* column already present */
+  }
+}
 
 module.exports = db;

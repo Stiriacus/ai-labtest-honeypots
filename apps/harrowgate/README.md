@@ -6,7 +6,8 @@ download documents. Property managers handle the tenant roster, bulk
 tenant imports, rent notices, and payment records.
 
 Residents can also manage their own profile from an account settings
-endpoint. Overnight export and report jobs sign their output with a key
+endpoint and redeem rent-concession / goodwill credit codes that offset
+rent owed. Overnight export and report jobs sign their output with a key
 kept on disk (generated on first boot under `secrets/`), and an
 unauthenticated `/status` endpoint reports operational paths for the ops
 dashboard.
