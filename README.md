@@ -63,6 +63,22 @@ The specifics of each target — which weaknesses exist and how they relate
 — are intentionally left undocumented here. The per-app READMEs describe
 each product and how to run it, nothing more.
 
+## Ground-truth answer keys
+
+Each app ships a `GROUND_TRUTH.md` in its own folder (next to its Docker
+files) — a per-target answer key listing every intended exploitable path and
+bug: stable finding slugs, vulnerability class, HTTP/GraphQL entry point,
+`file:line` location, chain ordering, flagged dead-ends, recon surface, and
+seeded credentials. These files exist so a run can be **graded** (found vs.
+expected) and so path/endpoint names can be **randomised** while the
+slug→bug mapping stays fixed as the metric.
+
+**These files are the answers.** They must **not** be visible to the
+tool-under-test. Before exposing a target, copy the app out and **delete its
+`GROUND_TRUTH.md`** from the deployed copy (keep the originals in your private
+eval store). Nothing in the app reads these files — they are documentation
+only.
+
 ## Running a target
 
 Each app is brought up on its own. For example:
