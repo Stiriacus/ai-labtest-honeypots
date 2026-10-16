@@ -1,63 +1,93 @@
-# Thornwood Trading Co. — Wholesale Portal
+# AI Labtest Honeypots
 
-A B2B ordering portal for Thornwood Trading Co. Registered trade accounts can
-browse the catalog, place orders, review order history, and raise support
-tickets with the Thornwood team. An internal admin area handles company
-accounts, order oversight, and catalog management.
+A set of self-contained, deliberately insecure applications used as
+**targets** for exercising and benchmarking AI-assisted penetration
+testing. Each one is a plausible, complete product — not a checklist of
+isolated bugs — so that finding something in it rewards real
+reconnaissance, analysis, and tool use rather than pattern matching.
 
-In production the portal runs behind an nginx reverse proxy and talks to a
-few internal-only backend services over the service mesh (an asset fetcher
-for supplier product images, an internal metadata/config endpoint, and a
-legacy reporting integration still consumed by an overnight cron). Machine
-clients such as the warehouse-sync job authenticate with long-lived API
-tokens rather than the interactive web login.
+These targets are the companion to a separate AI pentest harness: you run
+the tooling against them, judge how well it works, and only then point
+that tooling at your own development applications. Because the point is an
+honest benchmark, the targets are **not** tailored to any particular
+scanner, wordlist, or expected-findings list, and this repository ships
+**no solution guide or answer key** — what a target contains is for the
+tester (human or AI) to discover.
 
-## Tech stack
+## What's here
 
-- **Backend:** Node.js, Express, better-sqlite3
-- **Auth:** JWT in an HTTP-only cookie for interactive users; bearer API
-  tokens for machine/integration clients
-- **Frontend:** Vanilla JS single-page app (hash routing, no build step)
-- **Storage:** SQLite file under `data/`, uploaded avatars under `uploads/`
+Each app lives under [`apps/`](apps/) and is **independently controlled**:
+its own stack, its own `docker-compose.yml`, its own README, its own port.
+You bring up only the ones you want to test.
 
-## Running locally
+| App | Stack | Interface | Default port |
+|---|---|---|---|
+| [`apps/thornwood`](apps/thornwood/) | Node.js / Express + vanilla-JS SPA | Web UI + JSON API | 3000 |
+| [`apps/harrowgate`](apps/harrowgate/) | Python / FastAPI + server-rendered Jinja2 | Web UI | 8000 |
+| [`apps/meridian`](apps/meridian/) | Go / chi | JSON API only | 8080 |
+
+Three different stacks and three different shapes (classic web app,
+server-rendered app, headless API) so the tooling meets genuinely
+different surfaces and has to reach for different techniques.
+
+## Design principles
+
+Every target is built to the same ideas, which is what makes them harder
+to analyse than a bare vulnerable app:
+
+- **Reconnaissance matters.** Each target has a signal-to-noise surface:
+  mostly ordinary endpoints and assets, with the interesting things not
+  labelled and not on the obvious path. Enumeration and source/traffic
+  analysis are rewarded, guessing is not.
+- **Findings chain.** Reaching the most sensitive outcome takes several
+  steps, where the evidence from one step is the input to the next. That
+  forces nested tool use with analysis in between, not single-shot hits.
+- **Dead ends are real.** Some weaknesses are genuine, reportable
+  findings that nonetheless lead nowhere useful. Part of the exercise is
+  recognising a real bug that is *not* the way in.
+- **Order is enforced.** Some steps are visibly present but blocked until
+  an earlier step has been completed, so the path has to be worked out,
+  not brute-forced.
+- **Realistic backing.** Real data stores, plausible seed data at volume,
+  machine-to-machine integrations, internal-only services, and the kind
+  of leftover/legacy surface that accumulates in a real product.
+
+The specifics of each target — which weaknesses exist and how they relate
+— are intentionally left undocumented here. The per-app READMEs describe
+each product and how to run it, nothing more.
+
+## Running a target
+
+Each app is brought up on its own. For example:
 
 ```bash
-npm install
-npm run seed     # creates data/thornwood.sqlite with sample companies/products
-npm start        # serves on http://localhost:3000
+cd apps/thornwood && docker compose up --build      # http://localhost:3000
+cd apps/harrowgate && docker compose up --build     # http://localhost:8000
+cd apps/meridian && docker compose up --build       # http://localhost:8080
 ```
 
-Set `JWT_SECRET` and `PORT` as environment variables to override the
-defaults used in local development.
+Each app's README also documents running it directly (without Docker) for
+quick local work. Seed data is created on first boot.
 
-## Running with Docker
+## Safety and scope
 
-```bash
-docker compose up --build
+These applications are intentionally vulnerable. Run them **only** in an
+isolated lab.
+
+- Every app's compose network is marked `internal` (no outbound internet
+  access), and internal-only backend services are deliberately **not**
+  published to the host.
+- Do not expose these targets to the public internet or to any network
+  you do not fully control.
+- Use them only against tooling and in environments you are authorised to
+  test.
+
+## Repository layout
+
 ```
-
-This builds the portal image and the internal metadata service, seeds the
-database on first boot, and exposes the portal on `http://localhost:3000`.
-The internal metadata service is attached to the lab network only and is
-**not** published to the host. The compose network has no outbound
-internet access by default.
-
-## Project layout
-
+apps/
+  thornwood/    Node/Express B2B wholesale portal (web UI + API)
+  harrowgate/   Python/FastAPI property-management portal (server-rendered)
+  meridian/     Go/chi fleet-telematics API (headless)
+README.md       this file
 ```
-server/            Express app, routes, and SQLite access
-  routes/           auth, products, orders, tickets, admin, files,
-                     recon (public/status), legacy (reporting cron), internal
-  middleware/        session + API-token handling
-public/             Static frontend (HTML/CSS/vanilla JS), robots.txt, sitemap
-internal-metadata/  Internal-only metadata/config service (lab network)
-data/               SQLite database file (created on first run)
-uploads/avatars/    User-uploaded profile images
-```
-
-## Sample accounts
-
-Running `npm run seed` creates a handful of companies and users across
-different account tiers so the catalog, order history, and support desk all
-have realistic data to browse. See `server/seed.js` for the full list.

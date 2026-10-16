@@ -1,7 +1,4 @@
-node_modules/
-data/*.sqlite
-data/*.sqlite-*
-uploads/avatars/*
-!uploads/avatars/.gitkeep
-npm-debug.log*
+# Repository-wide ignores. Each app under apps/ also has its own
+# .gitignore for language-specific build output and generated data.
 .DS_Store
+*.log
