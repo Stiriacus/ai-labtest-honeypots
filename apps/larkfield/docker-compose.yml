@@ -1,0 +1,28 @@
+services:
+  larkfield:
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+    networks:
+      - labnet
+    depends_on:
+      - internal-metadata
+
+  # Internal-only metadata/config service: NOT published to the host.
+  # Only the API container can reach it, under the hostname the API's own
+  # config refers to.
+  internal-metadata:
+    build: ./internal-metadata
+    environment:
+      - PORT=8099
+    networks:
+      labnet:
+        aliases:
+          - metadata.larkfield.internal
+
+networks:
+  labnet:
+    driver: bridge
+    internal: true

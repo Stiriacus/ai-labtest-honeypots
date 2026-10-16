@@ -25,10 +25,11 @@ You bring up only the ones you want to test.
 | [`apps/thornwood`](apps/thornwood/) | Node.js / Express + vanilla-JS SPA | Web UI + JSON API | 3000 |
 | [`apps/harrowgate`](apps/harrowgate/) | Python / FastAPI + server-rendered Jinja2 | Web UI | 8000 |
 | [`apps/meridian`](apps/meridian/) | Go / chi | JSON API only | 8080 |
+| [`apps/larkfield`](apps/larkfield/) | Node.js / Express + `graphql` | GraphQL API only | 4000 |
 
-Three different stacks and three different shapes (classic web app,
-server-rendered app, headless API) so the tooling meets genuinely
-different surfaces and has to reach for different techniques.
+Four different stacks and four different shapes (classic web app,
+server-rendered app, headless REST API, GraphQL API) so the tooling meets
+genuinely different surfaces and has to reach for different techniques.
 
 ## Design principles
 
@@ -64,6 +65,7 @@ Each app is brought up on its own. For example:
 cd apps/thornwood && docker compose up --build      # http://localhost:3000
 cd apps/harrowgate && docker compose up --build     # http://localhost:8000
 cd apps/meridian && docker compose up --build       # http://localhost:8080
+cd apps/larkfield && docker compose up --build      # http://localhost:4000/graphql
 ```
 
 Each app's README also documents running it directly (without Docker) for
@@ -88,6 +90,7 @@ isolated lab.
 apps/
   thornwood/    Node/Express B2B wholesale portal (web UI + API)
   harrowgate/   Python/FastAPI property-management portal (server-rendered)
-  meridian/     Go/chi fleet-telematics API (headless)
+  meridian/     Go/chi fleet-telematics API (headless REST)
+  larkfield/    Node/Express analytics platform (GraphQL)
 README.md       this file
 ```
