@@ -24,12 +24,32 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	// The API sits behind an nginx reverse proxy in production, which sets
+	// the Server header clients see.
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Server", "nginx/1.25.4")
+			w.Header().Set("X-Meridian-Node", "api-01")
+			next.ServeHTTP(w, req)
+		})
+	})
+
+	// JSON (not plain-text) responses for unmatched routes/methods, as an
+	// API client expects.
+	r.NotFound(handleNotFound)
+	r.MethodNotAllowed(handleMethodNotAllowed)
+
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 
-	// Unauthenticated service descriptor (status dashboard / app bootstrap).
+	// Unauthenticated service descriptor + benign surface (status
+	// dashboard / app bootstrap).
 	r.Get("/api/meta", handleMeta)
+	r.Get("/api/status", handleStatus)
+	r.Get("/api/regions", handleRegions)
+	r.Get("/api/plans", handlePlans)
+	r.Get("/api/vehicle-types", handleVehicleTypes)
 
 	r.Route("/api/auth", func(r chi.Router) {
 		r.Post("/register", handleRegister(db))

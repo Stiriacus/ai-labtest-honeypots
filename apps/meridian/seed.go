@@ -67,6 +67,37 @@ func seedIfEmpty(db *sql.DB) {
 	db.Exec(`INSERT INTO vehicle_pings (vehicle_id, lat, lng, speed_kph, recorded_at) VALUES (?, ?, ?, ?, ?)`, v1, 51.0550, 13.7420, 42.0, now-3000)
 	db.Exec(`INSERT INTO vehicle_pings (vehicle_id, lat, lng, speed_kph, recorded_at) VALUES (?, ?, ?, ?, ?)`, v3, 37.7900, -122.3500, 55.0, now-1800)
 
+	// Additional vehicles, trips and location pings across both fleets so
+	// listing and enumeration is non-trivial rather than a handful of rows.
+	plates := []struct {
+		fleet       int64
+		plate       string
+		make, model string
+	}{
+		{fleetA, "NC-4023", "Ford", "Transit"},
+		{fleetA, "NC-4024", "Renault", "Master"},
+		{fleetA, "NC-4025", "Iveco", "Daily"},
+		{fleetB, "BL-1181", "Mercedes", "Sprinter"},
+		{fleetB, "BL-1182", "MAN", "TGE"},
+		{fleetB, "BL-1183", "Volkswagen", "Crafter"},
+	}
+	driversByFleet := map[int64][]int64{fleetA: {drv1, drv2}, fleetB: {drv3}}
+	for i, p := range plates {
+		vid, _ := execLastID(db, `INSERT INTO vehicles (fleet_id, plate, make, model, status) VALUES (?, ?, ?, ?, 'active')`,
+			p.fleet, p.plate, p.make, p.model)
+		drvs := driversByFleet[p.fleet]
+		drv := drvs[i%len(drvs)]
+		baseLat, baseLng := 51.05+float64(i)*0.01, 13.73+float64(i)*0.01
+		for t := 0; t < (i%3)+1; t++ {
+			db.Exec(`INSERT INTO trips (fleet_id, vehicle_id, driver_id, start_lat, start_lng, end_lat, end_lng, distance_km, started_at, ended_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+				p.fleet, vid, drv, baseLat, baseLng, baseLat+0.02, baseLng+0.03, 5.0+float64(i+t), now-int64((i+t+1)*4000), now-int64((i+t)*3000))
+		}
+		for g := 0; g < 5; g++ {
+			db.Exec(`INSERT INTO vehicle_pings (vehicle_id, lat, lng, speed_kph, recorded_at) VALUES (?, ?, ?, ?, ?)`,
+				vid, baseLat+float64(g)*0.001, baseLng+float64(g)*0.001, 30.0+float64(g*5), now-int64(g*600))
+		}
+	}
+
 	_ = adminA
 	_ = adminB
 	_ = dispA
