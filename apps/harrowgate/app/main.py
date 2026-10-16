@@ -30,6 +30,7 @@ from .routers import (
     documents_routes,
     admin_routes,
     account_routes,
+    public_routes,
 )
 
 app = FastAPI(title="Harrowgate Residential Portal")
@@ -39,6 +40,7 @@ init_db()
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(auth_routes.router)
+app.include_router(public_routes.router)
 app.include_router(account_routes.router)
 app.include_router(tenant_routes.router)
 app.include_router(maintenance_routes.router)
@@ -49,6 +51,10 @@ app.include_router(admin_routes.router)
 @app.middleware("http")
 async def access_log_middleware(request: Request, call_next):
     response = await call_next(request)
+    # The portal runs behind an nginx reverse proxy in production, which
+    # sets the Server header clients see.
+    response.headers["server"] = "nginx/1.26.0"
+    response.headers["x-harrowgate-node"] = "app-02"
     try:
         conn = get_conn()
         conn.execute(

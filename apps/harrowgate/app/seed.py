@@ -21,6 +21,12 @@ def run():
     prop2 = conn.execute(
         "INSERT INTO properties (address, city) VALUES (?, ?)", ("9 Millbrook Court", "Bristol")
     ).lastrowid
+    prop3 = conn.execute(
+        "INSERT INTO properties (address, city) VALUES (?, ?)", ("27 Ashcombe Terrace", "Bath")
+    ).lastrowid
+    prop4 = conn.execute(
+        "INSERT INTO properties (address, city) VALUES (?, ?)", ("3 Quayside Mews", "Bristol")
+    ).lastrowid
 
     units = [
         (prop1, "1A", 95000),
@@ -28,6 +34,13 @@ def run():
         (prop1, "2A", 101000),
         (prop2, "G1", 87000),
         (prop2, "G2", 89000),
+        (prop2, "1A", 92000),
+        (prop3, "1", 78000),
+        (prop3, "2", 81000),
+        (prop3, "3", 83000),
+        (prop4, "A", 110000),
+        (prop4, "B", 112000),
+        (prop4, "C", 115000),
     ]
     unit_ids = []
     for u in units:
@@ -50,6 +63,19 @@ def run():
     t2 = add_tenant("Ben Okafor", "bokafor@example.com", "555-0202", "okafor2024", unit_id=unit_ids[1])
     t3 = add_tenant("Lucia Serrano", "lserrano@example.com", "555-0203", "serrano!lucia", unit_id=unit_ids[2])
     t4 = add_tenant("Henry Walcott", "hwalcott@example.com", "555-0204", "walcott-henry", unit_id=unit_ids[3])
+
+    # Additional residents across the other units, for enumeration volume.
+    extra = [
+        ("Priya Shah", "pshah@example.com", "555-0205", "shah-priya-6", unit_ids[4]),
+        ("Tomasz Nowak", "tnowak@example.com", "555-0206", "nowak2024!", unit_ids[5]),
+        ("Grace Mensah", "gmensah@example.com", "555-0207", "mensah-grace", unit_ids[6]),
+        ("Liam Byrne", "lbyrne@example.com", "555-0208", "byrne-liam-3", unit_ids[7]),
+        ("Sofia Rossi", "srossi@example.com", "555-0209", "rossi-sofia!", unit_ids[8]),
+        ("Omar Haddad", "ohaddad@example.com", "555-0210", "haddad2024", unit_ids[9]),
+        ("Chloe Dupont", "cdupont@example.com", "555-0211", "dupont-chloe", unit_ids[10]),
+        ("Noah Fischer", "nfischer@example.com", "555-0212", "fischer-noah-8", unit_ids[11]),
+    ]
+    extra_ids = [add_tenant(n, e, p, pw, unit_id=u) for (n, e, p, pw, u) in extra]
 
     conn.execute(
         "INSERT INTO documents (tenant_id, title, file_path, uploaded_at) VALUES (?, ?, ?, ?)",
@@ -77,6 +103,35 @@ def run():
         "INSERT INTO payments (tenant_id, amount_cents, memo, paid_at) VALUES (?, ?, ?, ?)",
         (t1, 95000, "October rent", now),
     )
+
+    # Volume of routine requests and payments across all residents so that
+    # listing and enumeration is non-trivial rather than a handful of rows.
+    subjects = [
+        ("Radiator not heating", "open"),
+        ("Front door intercom faulty", "closed"),
+        ("Mould in bathroom ceiling", "open"),
+        ("Window won't lock", "closed"),
+        ("Dishwasher leaking", "open"),
+        ("Communal light out on stairwell", "closed"),
+        ("Request new parking permit", "open"),
+    ]
+    all_tenants = [t1, t2, t3, t4] + extra_ids
+    n = 0
+    for tid in all_tenants:
+        unit_row = conn.execute("SELECT unit_id FROM tenants WHERE id = ?", (tid,)).fetchone()
+        uid = unit_row["unit_id"] if unit_row else unit_ids[0]
+        for k in range((n % 3) + 1):
+            subj, st = subjects[(n + k) % len(subjects)]
+            conn.execute(
+                "INSERT INTO maintenance_requests (tenant_id, unit_id, subject, description, status, created_at) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (tid, uid, subj, "Reported via resident portal.", st, now - (n + k) * 86400),
+            )
+        conn.execute(
+            "INSERT INTO payments (tenant_id, amount_cents, memo, paid_at) VALUES (?, ?, ?, ?)",
+            (tid, 80000 + (n * 1500) % 40000, "Monthly rent", now - n * 2592000),
+        )
+        n += 1
 
     conn.commit()
     conn.close()

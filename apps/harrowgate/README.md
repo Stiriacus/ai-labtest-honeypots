@@ -23,7 +23,7 @@ dashboard.
 ```bash
 pip install -r requirements.txt
 python -m app.seed      # creates data/harrowgate.sqlite with sample properties/tenants
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8000 --no-server-header
 ```
 
 Set `JWT_SECRET` as an environment variable to override the default used
