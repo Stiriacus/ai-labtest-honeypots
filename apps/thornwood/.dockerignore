@@ -4,3 +4,4 @@ uploads/avatars/*
 !uploads/avatars/.gitkeep
 npm-debug.log*
 .git
+GROUND_TRUTH.md

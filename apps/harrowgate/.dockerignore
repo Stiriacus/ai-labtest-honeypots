@@ -1,0 +1,8 @@
+__pycache__
+data
+uploads/leases/*
+uploads/receipts/*
+secrets
+*.log
+.git
+GROUND_TRUTH.md
